@@ -43,12 +43,20 @@ export class DefaultPgnProcessor implements NotationProcessor {
                         engineFacade.board,
                         color
                     ).find(piece => piece instanceof Pawn);
+
+                    // en passant check
+                    if (!piece) {
+                        piece = MoveUtils.findPieceByPossibleCapturesContaining(
+                            move, engineFacade.board, color
+                        ).find(piece => piece instanceof Pawn);
+                    }
+
+                    // if piece is found for sure
                     if (piece) {
                         engineFacade.move(MoveUtils.formatSingle(
                             piece.point,
                             false
                         ) + move + promotionIndex);
-                    } else {
                     }
                 } else {
                     if (/^[A-Z][a-h]\d$/g.test(move)) {// jezeli ma wielka litere, czyli trzeba odszukac ktora figura Nf3
@@ -191,6 +199,13 @@ export class DefaultPgnProcessor implements NotationProcessor {
                                                             move.indexOf(
                                                                 'x') + 1) + promotionIndex);
                                                     }
+                                                } else {
+                                                    this.processR1f2(
+                                                        move,
+                                                        engineFacade,
+                                                        color,
+                                                        promotionIndex
+                                                    );
                                                 }
                                             }
                                         }
@@ -200,6 +215,34 @@ export class DefaultPgnProcessor implements NotationProcessor {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private processR1f2(move, engineFacade, color, promotionIndex) {
+        if (/^[A-Z]\d[a-z]\d$/g.test(move)) { // R1f2
+            let pieces = MoveUtils.findPieceByPossibleMovesContaining(
+                move.substring(2, 4),
+                engineFacade.board,
+                color
+            ).filter(piece => this.resolvePieceByFirstChar(
+                move.charAt(0),
+                piece
+            ));
+
+            let piece = this.resolveByRow(
+                pieces,
+                move.substring(1, 2)
+            );
+
+            if (piece) {
+                engineFacade.move(MoveUtils.formatSingle(
+                    piece.point,
+                    false
+                ) + move.substring(
+                    2,
+                    4
+                ) + promotionIndex);
             }
         }
     }

@@ -35,6 +35,8 @@ export class EngineFacade extends AbstractEngineFacade {
     moveChange: EventEmitter<MoveChange>;
     checkmate: EventEmitter<void>;
 
+    private historyMoveCandidate: HistoryMove;
+
     constructor(
         board: Board,
         moveChange: EventEmitter<MoveChange>,
@@ -56,7 +58,6 @@ export class EngineFacade extends AbstractEngineFacade {
         this.coords.reset();
         this.drawProvider.clear();
         this.pgnProcessor.reset();
-        this.freeMode = false;
     }
 
     public undo(): void {
@@ -68,6 +69,7 @@ export class EngineFacade extends AbstractEngineFacade {
             this.board = lastBoard;
             this.board.possibleCaptures = [];
             this.board.possibleMoves = [];
+            this.board.activePiece = null;
             this.moveHistoryProvider.pop();
             this.board.calculateFEN();
             this.pgnProcessor.removeLast();
@@ -175,10 +177,10 @@ export class EngineFacade extends AbstractEngineFacade {
 
     public handleClickEvent(pointClicked: Point, isMouseDown: boolean) {
         let moving = false;
-        if ((
+        if (((
             this.board.isPointInPossibleMoves(pointClicked) ||
             this.board.isPointInPossibleCaptures(pointClicked)
-        ) || this.freeMode) {
+        ) || this.freeMode) && pointClicked.isInRange()) {
             this.saveClone();
             this.board.lastMoveSrc = new Point(
                 this.board.activePiece.point.row,
@@ -349,13 +351,13 @@ export class EngineFacade extends AbstractEngineFacade {
             }
         }
 
-        const move = new HistoryMove(
+        this.historyMoveCandidate = new HistoryMove(
             MoveUtils.format(toMovePiece.point, newPoint, this.board.reverted),
             toMovePiece.constant.name,
             toMovePiece.color === Color.WHITE ? 'white' : 'black',
             !!destPiece
         );
-        this.moveHistoryProvider.addMove(move);
+        this.moveHistoryProvider.addMove(this.historyMoveCandidate);
 
         if (toMovePiece instanceof King) {
             const squaresMoved = Math.abs(newPoint.col - toMovePiece.point.col);
@@ -445,6 +447,7 @@ export class EngineFacade extends AbstractEngineFacade {
         const stalemate =
             this.checkForPat(Color.BLACK) || this.checkForPat(Color.WHITE);
 
+        this.historyMoveCandidate.setGameStates(check, stalemate, checkmate);
         this.pgnProcessor.processChecks(checkmate, check, stalemate);
         this.pgnProcessor.addPromotionChoice(promotionIndex);
 
@@ -463,7 +466,7 @@ export class EngineFacade extends AbstractEngineFacade {
             stalemate,
             fen: this.board.fen,
             pgn: {
-              pgn: this.pgnProcessor.getPGN()
+                pgn: this.pgnProcessor.getPGN()
             },
             freeMode: this.freeMode
         });
@@ -486,14 +489,16 @@ export class EngineFacade extends AbstractEngineFacade {
     }
 
     openPromoteDialog(piece: Piece) {
-        this.modal.open((index) => {
-            PiecePromotionResolver.resolvePromotionChoice(
-                this.board,
-                piece,
-                index
-            );
-            this.afterMoveActions(index);
-        });
+        if (piece.color === this.board.activePiece.color) {
+            this.modal.open((index) => {
+                PiecePromotionResolver.resolvePromotionChoice(
+                    this.board,
+                    piece,
+                    index
+                );
+                this.afterMoveActions(index);
+            });
+        }
     }
 
     checkForPossibleMoves(color: Color): boolean {
