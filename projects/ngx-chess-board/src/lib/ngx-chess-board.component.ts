@@ -72,7 +72,8 @@ export class NgxChessBoardComponent
     constructor(private ngxChessBoardService: NgxChessBoardService) {
         this.engineFacade = new EngineFacade(
             new Board(),
-            this.moveChange
+            this.moveChange,
+            this.checkmate
         );
     }
 

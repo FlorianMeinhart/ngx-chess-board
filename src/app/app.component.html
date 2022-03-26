@@ -1,6 +1,7 @@
 <div style="width:400px; margin-left: auto; margin-right: auto; padding-bottom: 100px;max-width: 100%">
     <h2 style="text-align: center">ngx-chess-board example</h2>
     <ngx-chess-board #board [size]="size" [lightTileColor]="lightTileColor" (moveChange)="moveCallback($event)"
+                     (checkmate)="checkmateCallback($event)"
                      [dragDisabled]="dragDisabled"
                      [drawDisabled]="drawDisabled"
                      [darkTileColor]="darkTileColor"
@@ -158,7 +159,7 @@
 
     <hr>
 
-    <label for="manualMove">Add piece (enable Free mode first)</label>
+    <label for="addPiece">Add piece (enable Free mode first)</label>
     <div class="input-group">
         <div class="input-group-prepend"></div>
         <input

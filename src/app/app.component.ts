@@ -18,6 +18,8 @@ import { FenComponent } from './components/fen/fen.component';
 export class AppComponent {
     @ViewChild('board')
     boardManager: NgxChessBoardComponent;
+    // @ViewChild(NgxChessBoardComponent)
+    // boardManager: NgxChessBoardComponent;
 
     @ViewChild('fenManager') fenManager: FenComponent;
     public fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -77,6 +79,10 @@ export class AppComponent {
         this.fen = this.boardManager.getFEN();
         this.pgn = this.boardManager.getPGN();
         console.log(move);
+    }
+
+    public checkmateCallback(move: MoveChange): void {
+        console.log("Checkmate!");
     }
 
     public moveManual(): void {

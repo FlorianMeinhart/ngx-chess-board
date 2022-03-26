@@ -33,13 +33,16 @@ export class EngineFacade extends AbstractEngineFacade {
     boardStateProvider: BoardStateProvider;
     moveStateProvider: MoveStateProvider;
     moveChange: EventEmitter<MoveChange>;
+    checkmate: EventEmitter<void>;
 
     constructor(
         board: Board,
-        moveChange: EventEmitter<MoveChange>
+        moveChange: EventEmitter<MoveChange>,
+        checkmate: EventEmitter<void>
     ) {
         super(board);
         this.moveChange = moveChange;
+        this.checkmate = checkmate;
         this.boardLoader = new BoardLoader(this);
         this.boardLoader.addPieces();
         this.boardStateProvider = new BoardStateProvider();
@@ -466,6 +469,10 @@ export class EngineFacade extends AbstractEngineFacade {
         });
 
         this.moveDone = true;
+
+        if (checkmate){
+            this.checkmate.emit();
+        }
     }
 
     checkForPat(color: Color) {
